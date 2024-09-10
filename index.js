@@ -8,28 +8,49 @@ import { typeDefs } from './schema.js';
 
 // Define resolvers for handling GraphQL queries
 const resolvers = {
-  Query: {
-    reviews: () => db.reviews,
-    review : ( _ ,args ) =>{
-        return db.reviews.find((review) => review.id === args.id)
-    },    
-    cars: () => db.cars,
-    car: ( _, args  ) => { 
-        return db.cars.find((car) => car.make === args.make )
+    Query: {
+        reviews: () => db.reviews,
+        review : ( _ ,args ) =>{
+            return db.reviews.find((review) => review.id === args.id)
+        },    
+        cars: () => db.cars,
+        car: ( _, args  ) => { 
+            return db.cars.find((car) => car.make === args.make )
+        },
+        dealerships: () => db.dealerships,
+        dealership: ( _, args  ) => { 
+            return db.dealerships.find((dealership) => dealership.id === args.id)}
     },
-    dealerships: () => db.dealerships,
-    dealership: ( _, args  ) => { 
-        return db.dealerships.find((dealership) => dealership.id === args.id)}
-  },
-  Dealership: {
+    Dealership: {
     reviews: (parent) => db.reviews.filter((review) => review.dealership === parent.id )
 },
-  Car: {
+    Car: {
     dealer: (parent) => {
         console.log(parent)
         return db.dealerships.find((dealership) => dealership.id === parent.dealer_id)
     }
-} 
+},
+    Mutation : {
+        deleteReview : ( _ , args ) => {
+            db.reviews = db.reviews.filter((review) => review.id !== args.id)
+            return db.reviews
+        },
+        addReview : ( _ , args ) => {
+            let review = { ... args.review, id : db.reviews.length + 1 }
+            // console.log(review)
+            db.reviews.push( review )
+            return db.reviews
+        },
+        updateReview( _, args ) {
+            let review = db.reviews.find((review) => review.id === args.id)
+            console.log("Updated Review", args.id )
+            review = { ...review, ...args.review }
+            this.deleteReview(null, { id: args.id })
+            db.reviews.push(review)
+            console.log("Updated Review", review)
+            return db.reviews
+        }
+    }
 };
 
 // Create an instance of Apollo Server with the schema and resolvers
